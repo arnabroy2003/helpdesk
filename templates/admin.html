@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://cdn.tailwindcss.com"></script>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script src="/static/js/firebase.js"></script>
+</head>
+
+<body class="flex h-screen">
+
+<!-- Sidebar -->
+<div class="w-1/4 bg-purple-100 p-4">
+  {% for user in users %}
+  <div onclick="loadChat('{{user.id}}')" class="p-2 cursor-pointer">
+    {{user.name}}
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Chat -->
+<div class="flex-1 flex flex-col">
+  <div id="chatBox" class="flex-1 p-4 overflow-y-auto"></div>
+
+  <div class="p-3 flex">
+    <input id="msg" class="flex-1 border p-2 rounded"/>
+    <button onclick="sendMsg()" class="bg-purple-600 text-white px-4 ml-2 rounded">Send</button>
+  </div>
+</div>
+
+<script>
+let currentUser = null;
+
+function loadChat(userId) {
+  currentUser = userId;
+  document.getElementById("chatBox").innerHTML = "";
+
+  db.ref("chats/" + userId + "/messages").on("child_added", snap => {
+    let msg = snap.val();
+    let div = document.createElement("div");
+
+    div.innerHTML = msg.text;
+    document.getElementById("chatBox").appendChild(div);
+  });
+}
+
+function sendMsg() {
+  let text = document.getElementById("msg").value;
+
+  db.ref("chats/" + currentUser + "/messages").push({
+    sender: "admin",
+    text: text,
+    timestamp: Date.now()
+  });
+
+  document.getElementById("msg").value = "";
+}
+</script>
+
+</body>
+</html>

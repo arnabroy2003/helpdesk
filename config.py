@@ -1,0 +1,7 @@
+import os
+
+SUPABASE_URL = "https://rithbuogcwvjmzqoyrcj.supabase.co"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJpdGhidW9nY3d2am16cW95cmNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MzUxOTUsImV4cCI6MjA4OTQxMTE5NX0.mo-8nz5oT9uFdlJR2GiRUmLWI9crNf5E8JQm3Oz0Kb4"
+
+ADMIN_USERNAME = "admin"
+ADMIN_PASSWORD = "1234"
