@@ -1,61 +1,270 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QSkill Support | Pro Terminal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="/static/js/firebase.js"></script>
+    
+    <style>
+        :root {
+            --bg-main: #f8fafc;
+            --text-main: #1e293b;
+        }
 
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-<script src="/static/js/firebase.js"></script>
+        .dark {
+            --bg-main: #0f172a;
+            --text-main: #f1f5f9;
+        }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            transition: background-color 0.4s ease;
+        }
+
+        .chat-bubble-text {
+        color: #1e293b !important; /* text-slate-800 */
+    }
+
+    .dark .chat-bubble-text {
+        color: #ffffff !important; /* Pure White */
+    }
+
+    /* Fixed Glass for Admin */
+    .admin-glass {
+        background: rgba(255, 255, 255, 0.9) !important;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .dark .admin-glass {
+        background: rgba(30, 41, 59, 0.8) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+
+    .input-text-custom {
+        color: #374151 !important; /* Gray-700 */
+    }
+
+    .dark .input-text-custom {
+        color: #e2e8f0 !important; /* Slate-200 */
+    }
+
+    /* Placeholder color fix (Optional but recommended for Premium UI) */
+    .input-text-custom::placeholder {
+        color: #94a3b8; /* Slate-400 */
+    }
+    
+    .dark .input-text-custom::placeholder {
+        color: #475569; /* Slate-600 */
+    }
+
+        /* Fixed Glassmorphism Logic */
+       .glass {
+        background: rgba(255, 255, 255, 0.85) !important;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+
+    /* Dark Mode Glass - Strictly forcing background color */
+    .dark .glass {
+        background: rgba(30, 41, 59, 0.8) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+
+    /* Input Background Fix */
+    .input-glass {
+        background: rgba(255, 255, 255, 0.6) !important;
+    }
+    .dark .input-glass {
+        background: rgba(15, 23, 42, 0.6) !important;
+    }
+
+        /* Scrollbar */
+        #chatBox::-webkit-scrollbar { width: 6px; }
+        #chatBox::-webkit-scrollbar-track { background: transparent; }
+        #chatBox::-webkit-scrollbar-thumb { background: #9333ea; border-radius: 10px; }
+
+        /* Smooth Animation */
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(15px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .message-animate {
+            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* Ambient Background */
+        .bg-gradient-animate {
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+            opacity: 0.04;
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .mb-safe {
+        padding-bottom: calc(env(safe-area-inset-bottom) + 1rem);
+    }
+
+    @media (min-width: 768px) {
+        .mb-safe {
+            padding-bottom: 1.5rem; /* desktop e normal padding */
+        }
+    }
+    </style>
 </head>
 
-<body class="bg-white flex flex-col h-screen">
+<body class="flex flex-col h-svh w-full relative overflow-hidden">
+    <div class="bg-gradient-animate"></div>
 
-<div id="chatBox" class="flex-1 overflow-y-auto p-4"></div>
+    <header class="glass sticky top-0 z-50 p-4 md:p-5 flex items-center justify-between border-b transition-all">
+        <div class="flex items-center gap-4 max-w-7xl mx-auto w-full">
+            <div class="flex items-center gap-4 flex-1">
+                <div class="relative group">
+                    <div class="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-tr from-purple-600 to-indigo-600 rounded-2xl flex items-center justify-center text-white font-bold shadow-xl shadow-purple-500/20 transform group-hover:rotate-6 transition-transform">
+                        Q
+                    </div>
+                    <div class="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-green-500 border-2 border-white dark:border-slate-800 rounded-full"></div>
+                </div>
+                <div>
+                    <h1 class="text-sm md:text-md font-bold tracking-tight">QSkill Support</h1>
+                    <div class="flex items-center gap-1.5">
+                        <span class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                        </span>
+                        <p class="text-[10px] font-semibold uppercase tracking-widest opacity-60">System Online</p>
+                    </div>
+                </div>
+            </div>
 
-<div class="p-3 flex">
-  <textarea id="msg" class="flex-1 border rounded p-2"></textarea>
-  <button onclick="sendMsg()" class="bg-purple-600 text-white px-4 ml-2 rounded">Send</button>
-</div>
+            <button onclick="toggleDarkMode()" class="p-2.5 rounded-xl bg-gray-100 dark:bg-slate-800 hover:scale-110 transition-all text-slate-600 dark:text-yellow-400 shadow-sm">
+                <svg id="themeIcon" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path id="themePath" d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+                </svg>
+            </button>
+        </div>
+    </header>
 
-<audio id="notify" src="/static/sounds/notify.mp3"></audio>
+    <div id="chatBox" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 scroll-smooth w-full">
+        <div id="messageWrapper" class="max-w-5xl mx-auto flex flex-col space-y-6">
+            </div>
+    </div>
+
+    <div class="p-4 pb-10 md:p-6 glass border-t border-white/10 shrink-0 mb-safe">
+    <div class="max-w-5xl mx-auto">
+            <div class="flex items-center gap-3 input-glass p-2 rounded-3xl border border-gray-200 dark:border-slate-700 focus-within:ring-4 focus-within:ring-purple-500/10 transition-all">
+                <button class="p-2 text-gray-400 hover:text-purple-600 transition-colors hidden md:block">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                </button>
+                
+                <textarea id="msg" 
+    rows="1"
+    placeholder="Type your message..." 
+    class="flex-1 bg-transparent border-none focus:ring-0 p-2 text-sm input-text-custom resize-none max-h-32 outline-none"
+    oninput="this.style.height = '';this.style.height = this.scrollHeight + 'px'"></textarea>
+                
+                <button onclick="sendMsg()" class="bg-purple-600 hover:bg-purple-500 text-white p-3 rounded-2xl shadow-lg shadow-purple-500/30 transition-all hover:-translate-y-0.5 active:scale-95 group">
+                    <svg class="h-5 w-5 rotate-90" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/></svg>
+                </button>
+            </div>
+            <div class="flex justify-center gap-4 mt-4 opacity-30 text-[9px] uppercase tracking-[0.2em] font-bold">
+                <span>Secure Tunnel</span>
+                <span>•</span>
+                <span>QSkill Pro Terminal</span>
+            </div>
+        </div>
+    </div>
+
+    <audio id="notify" src="/static/sounds/notify.mp3"></audio>
 
 <script>
 const userId = "{{ user_id }}";
 
+function toggleDarkMode() {
+    const isDark = document.documentElement.classList.toggle('dark');
+    window.dispatchEvent(new Event('resize'));
+    const path = document.getElementById("themePath");
+    if (isDark) {
+        path.setAttribute("d", "M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z");
+    } else {
+        path.setAttribute("d", "M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z");
+    }
+}
+
 function sendMsg() {
-  let text = document.getElementById("msg").value;
+    let msgInput = document.getElementById("msg");
+    let text = msgInput.value.trim();
+    if(!text) return;
 
-  db.ref("chats/" + userId + "/messages").push({
-    sender: "student",
-    text: text,
-    timestamp: Date.now()
-  });
+    db.ref("chats/" + userId + "/messages").push({
+        sender: "student",
+        text: text,
+        timestamp: Date.now()
+    });
 
-  document.getElementById("msg").value = "";
+    msgInput.value = "";
+    msgInput.style.height = 'auto';
 }
 
 db.ref("chats/" + userId + "/messages").on("child_added", snapshot => {
-  let msg = snapshot.val();
-  let div = document.createElement("div");
+    let msg = snapshot.val();
+    let messageWrapper = document.getElementById("messageWrapper");
+    let div = document.createElement("div");
 
-  div.className = msg.sender === "student" 
-    ? "text-right mb-2"
-    : "text-left mb-2";
+    const isStudent = msg.sender === "student";
+    div.className = isStudent ? "flex justify-end message-animate" : "flex justify-start message-animate";
 
-  div.innerHTML = `
-    <div class="inline-block px-4 py-2 rounded-xl 
-    ${msg.sender === "student" ? "bg-purple-500 text-white" : "bg-gray-200"}">
-      ${msg.text}
+    div.innerHTML = `
+<div class="group flex flex-col ${isStudent ? 'items-end' : 'items-start'} max-w-[90%] md:max-w-[70%]">
+    <div class="relative px-5 py-3 rounded-[22px] text-[13.5px] leading-relaxed shadow-lg transition-all
+        ${isStudent 
+            ? "bg-gradient-to-br from-purple-600 to-indigo-700 text-white rounded-tr-none shadow-purple-500/10" 
+            : "admin-glass chat-bubble-text rounded-tl-none"}"> ${msg.text}
     </div>
-  `;
+    <div class="flex items-center gap-2 mt-1.5 px-1">
+        <span class="text-[9px] font-bold uppercase tracking-widest opacity-40 text-slate-500 dark:text-slate-400">
+            ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+        </span>
+        ${isStudent ? '<svg class="w-3.5 h-3.5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>' : ''}
+    </div>
+</div>
+`;
 
-  document.getElementById("chatBox").appendChild(div);
+    messageWrapper.appendChild(div);
+    document.getElementById("notify").play();
+    
+    // Smooth scroll to bottom
+    const chatBox = document.getElementById("chatBox");
+    chatBox.scrollTo({
+        top: chatBox.scrollHeight,
+        behavior: 'smooth'
+    });
+});
 
-  document.getElementById("notify").play();
-
-  document.getElementById("chatBox").scrollTop = 999999;
+document.getElementById("msg").addEventListener("keydown", function(e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMsg();
+    }
 });
 </script>
-
 </body>
 </html>

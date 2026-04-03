@@ -1,61 +1,256 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QSkill Admin - Ultra Premium</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="/static/js/firebase.js"></script>
+    
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        
+        .user-card.active { 
+            background-color: #f5f3ff; /* purple-50 */
+            box-shadow: inset 4px 0 0 0 #7c3aed; /* purple-600 */
+        }
+        /* Overlay for mobile menu */
+        #menuOverlay.active { display: block; }
+        .pb-safe {
+        padding-bottom: calc(env(safe-area-inset-bottom) + 1rem);
+    }
 
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-<script src="/static/js/firebase.js"></script>
+    @media (min-width: 768px) {
+        .pb-safe {
+            padding-bottom: 1.5rem; /* Desktop-e normal padding */
+        }
+    }
+    </style>
 </head>
 
-<body class="flex h-screen">
+<body class="bg-slate-50 flex h-svh w-full overflow-hidden">
 
-<!-- Sidebar -->
-<div class="w-1/4 bg-purple-100 p-4">
-  {% for user in users %}
-  <div onclick="loadChat('{{user.id}}')" class="p-2 cursor-pointer">
-    {{user.name}}
-  </div>
-  {% endfor %}
-</div>
+    <div id="menuOverlay" onclick="toggleMenu()" class="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 hidden md:hidden"></div>
 
-<!-- Chat -->
-<div class="flex-1 flex flex-col">
-  <div id="chatBox" class="flex-1 p-4 overflow-y-auto"></div>
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-200 flex flex-col transition-transform duration-300 transform -translate-x-full md:relative md:translate-x-0 md:w-80">
+        
+        <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+            <h2 class="text-xl font-bold text-slate-800">QSkill <span class="text-purple-600">Admin</span></h2>
+            <button onclick="toggleMenu()" class="md:hidden text-slate-400 p-2 hover:bg-slate-50 rounded-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
 
-  <div class="p-3 flex">
-    <input id="msg" class="flex-1 border p-2 rounded"/>
-    <button onclick="sendMsg()" class="bg-purple-600 text-white px-4 ml-2 rounded">Send</button>
-  </div>
-</div>
+        <div id="userList" class="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-1">
+            {% for user in users %}
+            <div id="card-{{user.id}}" 
+                 onclick="loadChat('{{user.id}}', '{{user.name}}')" 
+                 class="user-card group flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-slate-50 transition-all">
+                
+                <div class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 font-bold shrink-0 group-hover:bg-purple-100 group-hover:text-purple-600 transition-colors">
+                    {{user.name[0]}}
+                </div>
+                
+                <div class="overflow-hidden">
+                    <p class="text-sm font-bold text-slate-700 truncate">{{user.name}}</p>
+                    <p class="text-[11px] text-slate-400 uppercase tracking-tighter font-semibold">View History</p>
+                </div>
+                <div id="dot-{{user.id}}" class="hidden w-2.5 h-2.5 bg-orange-500 rounded-full shadow-sm shadow-orange-200 animate-pulse"></div>
+            </div>
+            {% endfor %}
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col min-w-0">
+        
+        <header class="h-20 bg-white border-b border-slate-200 px-4 md:px-8 flex items-center gap-4 shrink-0">
+            <button onclick="toggleMenu()" class="md:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
+
+            <div class="flex items-center gap-3 overflow-hidden">
+                <div id="headerInitial" class="w-10 h-10 bg-purple-600 rounded-full hidden shrink-0 items-center justify-center text-white font-bold shadow-lg shadow-purple-100"></div>
+                <div class="truncate">
+                    <h3 id="activeUserName" class="text-sm md:text-lg font-bold text-slate-800 truncate">Select a student</h3>
+                    <p id="activeUserStatus" class="text-[10px] md:text-xs text-slate-400">Support Dashboard</p>
+                </div>
+            </div>
+        </header>
+
+        <div id="chatBox" class="flex-1 p-4 md:p-10 overflow-y-auto custom-scrollbar flex flex-col space-y-4 bg-[#fdfdff]">
+            <div id="placeholder" class="m-auto text-center opacity-30">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-20 w-20 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+                </svg>
+                <p class="text-lg font-medium">Click a user to begin chat</p>
+            </div>
+        </div>
+
+        <footer class="p-4 md:p-6 pb-safe bg-white border-t border-slate-200 shrink-0 relative z-10">
+    <div class="max-w-4xl mx-auto flex gap-2">
+        <input id="msg" type="text" placeholder="Type a message..." 
+            class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 md:px-6 md:py-4 text-sm outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-500/5 transition-all"/>
+        
+        <button onclick="sendMsg()" class="bg-purple-600 hover:bg-purple-700 active:scale-95 text-white font-bold px-4 md:px-8 py-3 md:py-4 rounded-xl shadow-lg shadow-purple-200 transition-all flex items-center gap-2">
+            <span class="hidden md:inline">Send</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+            </svg>
+        </button>
+    </div>
+</footer>
+    </main>
 
 <script>
-let currentUser = null;
+    let currentUser = null;
+    let chatRef = null;
 
-function loadChat(userId) {
-  currentUser = userId;
-  document.getElementById("chatBox").innerHTML = "";
+    // Hamburger Menu Logic
+    function toggleMenu() {
+        const sidebar = document.getElementById("sidebar");
+        const overlay = document.getElementById("menuOverlay");
+        const isHidden = sidebar.classList.contains("-translate-x-full");
+        
+        if (isHidden) {
+            sidebar.classList.remove("-translate-x-full");
+            overlay.classList.add("active");
+            overlay.classList.remove("hidden");
+        } else {
+            sidebar.classList.add("-translate-x-full");
+            overlay.classList.remove("active");
+            overlay.classList.add("hidden");
+        }
+    }
 
-  db.ref("chats/" + userId + "/messages").on("child_added", snap => {
-    let msg = snap.val();
-    let div = document.createElement("div");
+    function loadChat(userId, userName) {
+        // Close menu if on mobile
+        if (window.innerWidth < 768) {
+            toggleMenu();
+        }
 
-    div.innerHTML = msg.text;
-    document.getElementById("chatBox").appendChild(div);
-  });
+        // 1. Clear Previous Listener
+        if (chatRef) {
+            chatRef.off();
+        }
+        
+        currentUser = userId;
+        const chatBox = document.getElementById("chatBox");
+        const placeholder = document.getElementById("placeholder");
+        
+        // 2. UI Reset
+        chatBox.innerHTML = "";
+        if(placeholder) placeholder.style.display = "none";
+        
+        // Update Header
+        document.getElementById("activeUserName").innerText = userName;
+        document.getElementById("activeUserStatus").innerText = "Active Support Session";
+        const headInit = document.getElementById("headerInitial");
+        headInit.style.display = "flex";
+        headInit.innerText = userName[0];
+
+        // Highlight Active Card
+        document.querySelectorAll('.user-card').forEach(card => card.classList.remove('active'));
+        const selectedCard = document.getElementById('card-' + userId);
+        if(selectedCard) selectedCard.classList.add('active');
+
+        // 3. Start Listener
+        chatRef = db.ref("chats/" + userId + "/messages");
+        chatRef.on("child_added", snap => {
+            renderMessage(snap.val());
+        });
+    }
+
+    function renderMessage(msg) {
+        const chatBox = document.getElementById("chatBox");
+        const div = document.createElement("div");
+        const isAdmin = msg.sender === "admin";
+
+        div.className = isAdmin ? "flex justify-end" : "flex justify-start";
+        
+        div.innerHTML = `
+            <div class="max-w-[85%] md:max-w-[75%]">
+                <div class="p-3 md:p-4 rounded-2xl text-sm ${isAdmin 
+                    ? "bg-purple-600 text-white rounded-tr-none shadow-md shadow-purple-100" 
+                    : "bg-white text-slate-700 border border-slate-200 rounded-tl-none shadow-sm"}">
+                    ${msg.text}
+                </div>
+                <p class="text-[10px] text-slate-400 mt-1.5 font-bold uppercase tracking-wider ${isAdmin ? 'text-right' : 'text-left'}">
+                    ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                </p>
+            </div>
+        `;
+        
+        chatBox.appendChild(div);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function sendMsg() {
+        const input = document.getElementById("msg");
+        const text = input.value.trim();
+        
+        if(!text || !currentUser) return;
+
+        db.ref("chats/" + currentUser + "/messages").push({
+            sender: "admin",
+            text: text,
+            timestamp: Date.now()
+        });
+
+        input.value = "";
+    }
+
+    // Enter Key Support
+    document.getElementById("msg").addEventListener("keypress", (e) => {
+        if (e.key === "Enter") sendMsg();
+    });
+
+    // 1. Initialize listeners for all users to catch new messages
+function initNotificationSystem() {
+    // We assume 'users' is available as a JS array from your backend/template
+    const allUserIds = [
+        {% for user in users %}"{{user.id}}",{% endfor %}
+    ];
+
+    allUserIds.forEach(userId => {
+        // Listen to the last message of every student
+        db.ref("chats/" + userId + "/messages").limitToLast(1).on("child_added", snap => {
+            const msg = snap.val();
+            
+            // Only show dot if:
+            // 1. The message is from the 'student'
+            // 2. The chat with this student is NOT the one currently open
+            if (msg.sender === "student" && currentUser !== userId) {
+                const dot = document.getElementById("dot-" + userId);
+                if (dot) dot.classList.remove("hidden");
+            }
+        });
+    });
 }
 
-function sendMsg() {
-  let text = document.getElementById("msg").value;
+// 2. Modify your existing loadChat function to hide the dot when clicked
+const originalLoadChat = loadChat; // Reference to your existing function
+loadChat = function(userId, userName) {
+    // Hide the orange dot for this user when admin clicks it
+    const dot = document.getElementById("dot-" + userId);
+    if (dot) dot.classList.add("hidden");
+    
+    // Call the original logic (clearing chatBox, loading messages, etc.)
+    originalLoadChat(userId, userName);
+};
 
-  db.ref("chats/" + currentUser + "/messages").push({
-    sender: "admin",
-    text: text,
-    timestamp: Date.now()
-  });
+// 3. Start the system when the page loads
+initNotificationSystem();
 
-  document.getElementById("msg").value = "";
-}
 </script>
 
 </body>
