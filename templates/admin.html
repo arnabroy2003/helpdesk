@@ -27,6 +27,16 @@
         padding-bottom: calc(env(safe-area-inset-bottom) + 1rem);
     }
 
+    #userList {
+        display: flex;
+        flex-direction: column;
+        scroll-behavior: smooth;
+    }
+
+    #userList > div {
+        transition: all 0.5s ease;
+    }
+
     @media (min-width: 768px) {
         .pb-safe {
             padding-bottom: 1.5rem; /* Desktop-e normal padding */
@@ -51,23 +61,25 @@
         </div>
 
         <div id="userList" class="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-1">
-            {% for user in users %}
-            <div id="card-{{user.id}}" 
-                 onclick="loadChat('{{user.id}}', '{{user.name}}')" 
-                 class="user-card group flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-slate-50 transition-all">
-                
-                <div class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 font-bold shrink-0 group-hover:bg-purple-100 group-hover:text-purple-600 transition-colors">
-                    {{user.name[0]}}
-                </div>
-                
-                <div class="overflow-hidden">
-                    <p class="text-sm font-bold text-slate-700 truncate">{{user.name}}</p>
-                    <p class="text-[11px] text-slate-400 uppercase tracking-tighter font-semibold">View History</p>
-                </div>
-                <div id="dot-{{user.id}}" class="hidden w-2.5 h-2.5 bg-orange-500 rounded-full shadow-sm shadow-orange-200 animate-pulse"></div>
+    {% for user in users %}
+    <div id="wrapper-{{user.id}}"> 
+        <div id="card-{{user.id}}" 
+             onclick="loadChat('{{user.id}}', '{{user.name}}')" 
+             class="user-card group flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-slate-50 transition-all">
+            
+            <div class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 font-bold shrink-0 group-hover:bg-purple-100 group-hover:text-purple-600 transition-colors">
+                {{user.name[0]}}
             </div>
-            {% endfor %}
+            
+            <div class="overflow-hidden flex-1">
+                <p class="text-sm font-bold text-slate-700 truncate">{{user.name}}</p>
+                <p class="text-[11px] text-slate-400 uppercase tracking-tighter font-semibold">View History</p>
+            </div>
+            <div id="dot-{{user.id}}" class="hidden w-2.5 h-2.5 bg-orange-500 rounded-full shadow-sm shadow-orange-200 animate-pulse"></div>
         </div>
+    </div>
+    {% endfor %}
+</div>
     </aside>
 
     <main class="flex-1 flex flex-col min-w-0">
@@ -111,8 +123,6 @@
     </div>
 </footer>
     </main>
-
-    <audio id="notify" src="/static/sounds/notify.mp3"></audio>
 
 <script>
     let currentUser = null;
@@ -209,8 +219,6 @@
             timestamp: Date.now()
         });
 
-        document.getElementById("notify").play();
-
         input.value = "";
     }
 
@@ -221,22 +229,31 @@
 
     // 1. Initialize listeners for all users to catch new messages
 function initNotificationSystem() {
-    // We assume 'users' is available as a JS array from your backend/template
     const allUserIds = [
         {% for user in users %}"{{user.id}}",{% endfor %}
     ];
 
+    const userListContainer = document.getElementById("userList");
+
     allUserIds.forEach(userId => {
-        // Listen to the last message of every student
+        // limitToLast(1) diye sudhu latest message check kora hochhe
         db.ref("chats/" + userId + "/messages").limitToLast(1).on("child_added", snap => {
             const msg = snap.val();
             
-            // Only show dot if:
-            // 1. The message is from the 'student'
-            // 2. The chat with this student is NOT the one currently open
+            // --- TOP-E NIYE ASHAR LOGIC ---
+            const userWrapper = document.getElementById("wrapper-" + userId);
+            if (userWrapper) {
+                // prepend korle card-ta list-er shobar upore chole ashibe
+                userListContainer.prepend(userWrapper);
+            }
+
+            // Notification dot logic (already jeta chhilo)
             if (msg.sender === "student" && currentUser !== userId) {
                 const dot = document.getElementById("dot-" + userId);
                 if (dot) dot.classList.remove("hidden");
+                
+                // Optional: Admin list-e thakle sound hobe
+                // document.getElementById("notify").play();
             }
         });
     });
