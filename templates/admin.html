@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QSkill Admin - Ultra Premium</title>
+    <title>QSkill Admin</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -111,6 +112,8 @@
 </footer>
     </main>
 
+    <audio id="notify" src="/static/sounds/notify.mp3"></audio>
+
 <script>
     let currentUser = null;
     let chatRef = null;
@@ -205,6 +208,8 @@
             text: text,
             timestamp: Date.now()
         });
+
+        document.getElementById("notify").play();
 
         input.value = "";
     }
